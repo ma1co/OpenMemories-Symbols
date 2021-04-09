@@ -37,9 +37,9 @@ class ElfFile:
   ))
   self.elf.sections.append(data)
 
- def _appendSymbol(self, name=None, addr=0, section=0):
+ def _appendSymbol(self, name=None, addr=0, info=0, section=0):
   name = self.strtab.append(name) if name is not None else 0
-  self.symtab.append(Elf32_Sym(st_name=name, st_value=addr, st_shndx=section, little=True))
+  self.symtab.append(Elf32_Sym(st_name=name, st_value=addr, st_info=info, st_shndx=section, little=True))
 
  def _findSection(self, addr):
   for i, shdr in enumerate(self.elf.Shdr_table):
@@ -55,7 +55,7 @@ class ElfFile:
 
  def appendSymbol(self, name, addr):
   section = self._findSection(addr)
-  self._appendSymbol(name=name, addr=addr, section=section)
+  self._appendSymbol(name=name, addr=addr, info=STT.STT_FUNC + (STB.STB_GLOBAL << 4), section=section)
 
  def __bytes__(self):
   self.elf.Ehdr.e_shnum = len(self.elf.Shdr_table)
