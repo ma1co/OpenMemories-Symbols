@@ -3,10 +3,19 @@ import argparse
 import hashlib
 import yaml
 
-from elf import ElfFile
+from elf import ElfFile, ARCH_ARM
 
-def writeSymbols(data, segments, symbols, output):
- elf = ElfFile()
+architectures = {
+ 'arm':   (ARCH_ARM, True),
+ 'armeb': (ARCH_ARM, False),
+}
+
+def writeSymbols(data, arch, segments, symbols, output):
+ arch = architectures.get(arch)
+ if not arch:
+  raise Exception('Invalid architecture')
+
+ elf = ElfFile(arch=arch[0], little=arch[1])
 
  for seg in segments:
   elf.appendSection(seg['name'], seg['addr'], seg['size'], 'w' in seg['flg'], 'x' in seg['flg'], seg.get('offset'))
@@ -29,7 +38,7 @@ def findSymbols(input, output):
   if hash == known['hash']:
    print('%s is a known file: %s from %s version %s' % (input.name, known['file'], known['model'], known['version']))
    print('Writing symbols to %s' % output.name)
-   writeSymbols(data, known['segments'], known['symbols'], output)
+   writeSymbols(data, known.get('arch', 'arm'), known['segments'], known['symbols'], output)
    print('Done')
    return
  print('Unknown file')

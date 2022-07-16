@@ -1,16 +1,19 @@
 from makeelf.elf import *
 from makeelf.elf import _Strtab, _Symtab
 
+ARCH_ARM = EM.EM_ARM
+
 class ElfFile:
- def __init__(self):
+ def __init__(self, arch=ARCH_ARM, little=True):
+  self.little = little
   self.elf = Elf32(Ehdr=Elf32_Ehdr(
-   e_ident=Elf32_e_ident(EI_DATA=ELFDATA.ELFDATA2LSB),
+   e_ident=Elf32_e_ident(EI_DATA=ELFDATA.ELFDATA2LSB if self.little else ELFDATA.ELFDATA2MSB),
    e_type=ET.ET_EXEC,
-   e_machine=EM.EM_ARM,
+   e_machine=arch,
    e_shoff=len(Elf32_Ehdr()),
    e_shentsize=len(Elf32_Shdr()),
    e_shstrndx=1,
-   little=True,
+   little=self.little,
   ))
 
   self.shstrtab = _Strtab()
@@ -33,13 +36,13 @@ class ElfFile:
    sh_size=size,
    sh_link=link,
    sh_entsize=entsize,
-   little=True,
+   little=self.little,
   ))
   self.elf.sections.append(data)
 
  def _appendSymbol(self, name=None, addr=0, info=0, section=0):
   name = self.strtab.append(name) if name is not None else 0
-  self.symtab.append(Elf32_Sym(st_name=name, st_value=addr, st_info=info, st_shndx=section, little=True))
+  self.symtab.append(Elf32_Sym(st_name=name, st_value=addr, st_info=info, st_shndx=section, little=self.little))
 
  def _findSection(self, addr):
   for i, shdr in enumerate(self.elf.Shdr_table):
